@@ -31,6 +31,34 @@ func setupRouter(env *Env) *gin.Engine {
 	r.GET("/server", func(c *gin.Context) {
 
 	})
+	// Returns information regarding the server with the specified guild_id
+	r.GET("/server/:guild_id", func(c *gin.Context) {
+
+	})
+	// Returns a list of members in a guild who have logged in
+	r.GET("/server/:guild_id/members", func(c *gin.Context) {
+
+	})
+	// Returns a list of movies that the guild has suggested and watched
+	r.GET("/server/:guild_id/movies", func(c *gin.Context) {
+
+	})
+	// Returns a list of scheduled events for a guild
+	r.GET("/server/:guild_id/events", func(c *gin.Context) {
+
+	})
+	// Returns a list of regularly scheduled events for a guild
+	r.GET("/server/:guild_id/events/recurring", func(c *gin.Context) {
+
+	})
+	// Adds a new scheduled event for a server
+	r.POST("/server/:guild_id/events/new", func(c *gin.Context) {
+
+	})
+	// Returns the event details of a specified event
+	r.GET("/server/:guild_id/events/:event_id", func(c *gin.Context) {
+
+	})
 	return r
 }
 
