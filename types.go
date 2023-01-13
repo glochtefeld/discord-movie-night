@@ -1,8 +1,21 @@
 package main
 
-type Movie struct {
-	id         int
-	imdbID     string
-	title      string
-	runtimeMin int
+import (
+	"time"
+)
+
+type Guild struct {
+	Id         uint
+	Discord_id string
+	Name       string
+	Created    time.Time
+	Updated    time.Time
+}
+
+type User struct {
+	Id         uint
+	Discord_id string
+	Nickname   string
+	Created    time.Time
+	Updated    time.Time
 }

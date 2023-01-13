@@ -26,6 +26,11 @@ func setupRouter(env *Env) *gin.Engine {
 	r.GET("/ping", func(c *gin.Context) {
 		c.String(http.StatusOK, "pong")
 	})
+
+	// Returns the list of servers (dev only)
+	r.GET("/server", func(c *gin.Context) {
+
+	})
 	return r
 }
 

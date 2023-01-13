@@ -6,18 +6,18 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func root(c *gin.Context) {}
+func Root(c *gin.Context) {}
 
-func add(c *gin.Context, db *sql.DB)        {}
-func auth(c *gin.Context, db *sql.DB)       {}
-func authCB(c *gin.Context, db *sql.DB)     {}
-func privacy(c *gin.Context, db *sql.DB)    {}
-func tos(c *gin.Context, db *sql.DB)        {}
-func about(c *gin.Context, db *sql.DB)      {}
-func guild(c *gin.Context, db *sql.DB)      {}
-func guild_id(c *gin.Context, db *sql.DB)   {}
-func members(c *gin.Context, db *sql.DB)    {}
-func movies(c *gin.Context, db *sql.DB)     {}
-func events(c *gin.Context, db *sql.DB)     {}
-func events_new(c *gin.Context, db *sql.DB) {}
-func events_id(c *gin.Context, db *sql.DB)  {}
+func Add(c *gin.Context, db *sql.DB)        {}
+func Auth(c *gin.Context, db *sql.DB)       {}
+func AuthCB(c *gin.Context, db *sql.DB)     {}
+func Privacy(c *gin.Context, db *sql.DB)    {}
+func Tos(c *gin.Context, db *sql.DB)        {}
+func About(c *gin.Context, db *sql.DB)      {}
+func Guild(c *gin.Context, db *sql.DB)      {}
+func Guild_id(c *gin.Context, db *sql.DB)   {}
+func Members(c *gin.Context, db *sql.DB)    {}
+func Movies(c *gin.Context, db *sql.DB)     {}
+func Events(c *gin.Context, db *sql.DB)     {}
+func Events_new(c *gin.Context, db *sql.DB) {}
+func Events_id(c *gin.Context, db *sql.DB)  {}
