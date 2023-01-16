@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -9,11 +8,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
-	"github.com/lib/pq"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 type Env struct {
-	db *sql.DB
+	db *gorm.DB
 }
 
 func setupRouter(env *Env) *gin.Engine {
@@ -62,15 +62,14 @@ func setupRouter(env *Env) *gin.Engine {
 	return r
 }
 
-func setupDB(dbinfo string) *sql.DB {
+func setupDB(dbinfo string) *gorm.DB {
 	fmt.Print(dbinfo)
 	fmt.Print("\n")
-	conn, err := pq.NewConnector(dbinfo)
+	db, err := gorm.Open(postgres.Open(dbinfo), &gorm.Config{})
 	if err != nil {
 		fmt.Print(err)
 		log.Fatal("Could not connect to database")
 	}
-	db := sql.OpenDB(conn)
 	return db
 }
 
@@ -81,7 +80,6 @@ func main() {
 	}
 	dbinfo := fmt.Sprintf("host=localhost port=5432 dbname=%s user=%s password=%s", os.Getenv("DB_USER"), os.Getenv("DB_PASS"), "dmn")
 	db := setupDB(dbinfo)
-	defer db.Close()
 	env := &Env{db: db}
 
 	r := setupRouter(env)
