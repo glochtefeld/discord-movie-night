@@ -8,20 +8,14 @@ import (
 
 type Guild struct {
 	gorm.Model
-	ID         uint `gorm:"primaryKey"`
 	Discord_ID string
 	Name       string
-	Created    time.Time
-	Updated    time.Time
 }
 
 type User struct {
 	gorm.Model
-	ID         uint `gorm:"primaryKey"`
 	Discord_ID string
 	Nickname   string
-	Created    time.Time
-	Updated    time.Time
 }
 
 type GuildMember struct {
@@ -34,13 +28,11 @@ type GuildMember struct {
 
 type Movie struct {
 	gorm.Model
-	ID          uint `gorm:"primaryKey"`
 	IMDB_ID     string
 	Title       string
 	RuntimeMin  uint
 	Description string
 	Released    time.Time
-	Created     time.Time
 }
 
 type GuildMovie struct {
@@ -51,14 +43,12 @@ type GuildMovie struct {
 	Movie       Movie `gorm:"constraint:OnUpdate:CASCADE;OnDelete:CASCADE;"`
 	NumViewings uint
 	UserID      uint
-	SuggestedBy User `gorm:"constraint:OnUpdate:CASCADE;OnDelete:SET NULL;"`
-	Created     time.Time
-	Updated     time.Time
+	SuggestedBy User `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE;OnDelete:SET NULL;"`
 }
 
 type EventLoc struct {
 	gorm.Model
-	ID          uint  `gorm:"primaryKey"`
+	GuildID     uint
 	Guild       Guild `gorm:"constraint:OnUpdate:CASCADE;OnDelete:CASCADE;"`
 	IsVC        bool
 	Description string
@@ -66,11 +56,10 @@ type EventLoc struct {
 
 type Event struct {
 	gorm.Model
-	ID                 uint `gorm:"primaryKey"`
 	GuildID            uint
 	Guild              Guild `gorm:"constraint:OnUpdate:CASCADE;OnDelete:CASCADE"`
 	Topic              string
-	LocID              uint
+	LocationID         uint
 	Location           EventLoc `gorm:"constraint:OnUpdate:CASCADE;OnDelete:SET NULL;"`
 	Description        string
 	StartTime          time.Time
@@ -78,6 +67,4 @@ type Event struct {
 	Repeating          bool
 	RepeatIntervalDays uint
 	Completed          bool
-	Created            time.Time
-	Updated            time.Time
 }
