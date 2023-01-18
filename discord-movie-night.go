@@ -5,10 +5,10 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	"golang.org/x/oauth2"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -16,6 +16,8 @@ import (
 type Env struct {
 	db *gorm.DB
 }
+
+var client *http.Client
 
 func setupRouter(env *Env) *gin.Engine {
 	// Disable Console Color
@@ -26,6 +28,36 @@ func setupRouter(env *Env) *gin.Engine {
 	// Ping test
 	r.GET("/ping", func(c *gin.Context) {
 		c.String(http.StatusOK, "pong")
+	})
+
+	r.GET("/login", func(c *gin.Context) {
+		conf := &oauth2.Config{
+			ClientID:     os.Getenv("DISCORD_CLIENT_ID"),
+			ClientSecret: os.Getenv("DISCORD_CLIENT_SECRET"),
+			Scopes:       []string{"bot", "identify"},
+			RedirectURL:  "http://localhost:8080/auth",
+			Endpoint: oauth2.Endpoint{
+				AuthURL:  "https://discord.com/oauth2/authorize",
+				TokenURL: "https://discord.com/api/oauth2/token",
+			},
+		}
+		url := conf.AuthCodeURL( /* TODO */ "", oauth2.AccessTypeOffline)
+		fmt.Printf("Visit the URL for the auth dialog: %v", url)
+
+		var code string
+		if _, err := fmt.Scan(&code); err != nil {
+			log.Fatal(err)
+		}
+		tok, err := conf.Exchange(c, code)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		client = conf.Client(c, tok)
+	})
+
+	r.POST("/auth/callback", func(c *gin.Context) {
+		fmt.Printf("Callback called back")
 	})
 
 	// Returns the list of servers (dev only)
@@ -74,26 +106,13 @@ func setupDB(dbinfo string) *gorm.DB {
 	return db
 }
 
-func main() {
-	denvErr := godotenv.Load()
-	if denvErr != nil {
-		log.Fatal("Error loading .env file")
-	}
-	dbinfo := fmt.Sprintf("host=localhost port=5432 dbname=%s user=%s password=%s", "dmn", os.Getenv("DB_USER"), os.Getenv("DB_PASS"))
-	db := setupDB(dbinfo)
-	db.AutoMigrate(&Guild{}, &User{}, &GuildMember{}, &Movie{}, &GuildMovie{}, &EventLoc{}, &Event{})
-	//env := &Env{db: db}
-
-	// guild := Guild{Discord_ID: "02837", Name: "The Bastard Brigade"}
-	// db.Create(&guild)
-	// user := User{Discord_ID: "0123", Nickname: "Libnits"}
-	// db.Create(&user)
-	// gm := GuildMember{User: user, Guild: guild}
-	// db.Create(&gm)
-
-	// fmt.Printf("ID: %d, err: %s, rows: %d\n", guild.ID, result.Error, result.RowsAffected)
-	// fmt.Printf("ID: %d, err: %s, rows: %d\n", user.ID, r2.Error, r2.RowsAffected)
-	// fmt.Printf("err: %s, rows: %d\n", r3.Error, r3.RowsAffected)
+/* func testDB(env *Env) {
+	guild := Guild{Discord_ID: "02837", Name: "The Bastard Brigade"}
+	env.db.Create(&guild)
+	user := User{Discord_ID: "0123", Nickname: "Libnits"}
+	env.db.Create(&user)
+	gm := GuildMember{User: user, Guild: guild}
+	env.db.Create(&gm)
 
 	var users []struct {
 		Nickname   string
@@ -105,7 +124,7 @@ func main() {
 	}
 
 	s2 := time.Now()
-	res1 := db.Model(&GuildMember{}).
+	res1 := env.db.Model(&GuildMember{}).
 		Select("users.nickname, guilds.name as server_name").
 		Joins("inner join guilds on guild_members.guild_id=guilds.id").
 		Joins("inner join users on guild_members.user_id=users.id").
@@ -113,9 +132,9 @@ func main() {
 	r2Time := time.Since(s2)
 
 	start := time.Now()
-	res := db.Raw(`select nickname, guilds.name as server_name 
-		from guild_members gm 
-		inner join users on gm.user_id=users.id 
+	res := env.db.Raw(`select nickname, guilds.name as server_name
+		from guild_members gm
+		inner join users on gm.user_id=users.id
 		inner join guilds on gm.guild_id=guilds.id`).Find(&users)
 	resTime := time.Since(start)
 
@@ -125,8 +144,20 @@ func main() {
 	if res1.Error == nil {
 		fmt.Printf("Functiony took %s; %+v\n", r2Time, users1)
 	}
+}
+*/
 
-	//r := setupRouter(env)
-	// Listen and Server in 0.0.0.0:8080
-	//r.Run(":8080")
+func main() {
+	denvErr := godotenv.Load()
+	if denvErr != nil {
+		log.Fatal("Error loading .env file")
+	}
+	dbinfo := fmt.Sprintf("host=localhost port=5432 dbname=%s user=%s password=%s", "dmn", os.Getenv("DB_USER"), os.Getenv("DB_PASS"))
+	db := setupDB(dbinfo)
+	db.AutoMigrate(&Guild{}, &User{}, &GuildMember{}, &Movie{}, &GuildMovie{}, &EventLoc{}, &Event{})
+	env := &Env{db: db}
+
+	r := setupRouter(env)
+	r.Run(":8080")
+
 }
