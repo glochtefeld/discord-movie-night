@@ -37,7 +37,7 @@ func setupRouter(env *Env) *gin.Engine {
 	store := cookie.NewStore([]byte("secret"))
 	sessionNames := []string{"a", "b"}
 	router.Use(sessions.SessionsMany(sessionNames, store))
-	router.LoadHTMLFiles("index.html")
+	router.LoadHTMLFiles("build/index.html")
 
 	router.SetTrustedProxies(nil)
 
