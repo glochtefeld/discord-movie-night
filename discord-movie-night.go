@@ -1,11 +1,16 @@
 package main
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
 
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"golang.org/x/oauth2"
@@ -17,82 +22,96 @@ type Env struct {
 	db *gorm.DB
 }
 
-var client *http.Client
+func generateState(n int) (string, error) {
+	data := make([]byte, n)
+	if _, err := io.ReadFull(rand.Reader, data); err != nil {
+		return "", err
+	}
+	return base64.StdEncoding.EncodeToString(data), nil
+}
 
 func setupRouter(env *Env) *gin.Engine {
 	// Disable Console Color
 	// gin.DisableConsoleColor()
-	r := gin.Default()
-	r.SetTrustedProxies(nil)
+	router := gin.Default()
+	store := cookie.NewStore([]byte("secret"))
+	sessionNames := []string{"a", "b"}
+	router.Use(sessions.SessionsMany(sessionNames, store))
+	router.LoadHTMLFiles("index.html")
+
+	router.SetTrustedProxies(nil)
 
 	// Ping test
-	r.GET("/ping", func(c *gin.Context) {
+	router.GET("/ping", func(c *gin.Context) {
 		c.String(http.StatusOK, "pong")
 	})
-
-	r.GET("/login", func(c *gin.Context) {
+	router.GET("/", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "index.html", gin.H{})
+	})
+	router.GET("/login", func(c *gin.Context) {
 		conf := &oauth2.Config{
 			ClientID:     os.Getenv("DISCORD_CLIENT_ID"),
 			ClientSecret: os.Getenv("DISCORD_CLIENT_SECRET"),
 			Scopes:       []string{"bot", "identify"},
-			RedirectURL:  "http://localhost:8080/auth",
+			RedirectURL:  "http://localhost:8080/auth/callback",
 			Endpoint: oauth2.Endpoint{
 				AuthURL:  "https://discord.com/oauth2/authorize",
 				TokenURL: "https://discord.com/api/oauth2/token",
 			},
 		}
-		url := conf.AuthCodeURL( /* TODO */ "", oauth2.AccessTypeOffline)
+		/* 		state, err := generateState(128)
+		   		if err != nil {
+		   			log.Fatal(err)
+		   		} */
+		url := conf.AuthCodeURL("hello", oauth2.AccessTypeOffline)
 		fmt.Printf("Visit the URL for the auth dialog: %v", url)
 
-		var code string
-		if _, err := fmt.Scan(&code); err != nil {
-			log.Fatal(err)
-		}
-		tok, err := conf.Exchange(c, code)
+		tok, err := conf.Exchange(c, c.Query("code"))
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		client = conf.Client(c, tok)
+		client := conf.Client(c, tok)
+		fmt.Printf("%+v\n", client)
 	})
 
-	r.POST("/auth/callback", func(c *gin.Context) {
+	router.POST("/auth/callback", func(c *gin.Context) {
 		fmt.Printf("Callback called back")
 	})
 
 	// Returns the list of servers (dev only)
-	r.GET("/server", func(c *gin.Context) {
+	router.GET("/server", func(c *gin.Context) {
 
 	})
 	// Returns information regarding the server with the specified guild_id
-	r.GET("/server/:guild_id", func(c *gin.Context) {
+	router.GET("/server/:guild_id", func(c *gin.Context) {
 
 	})
 	// Returns a list of members in a guild who have logged in
-	r.GET("/server/:guild_id/members", func(c *gin.Context) {
+	router.GET("/server/:guild_id/members", func(c *gin.Context) {
 
 	})
 	// Returns a list of movies that the guild has suggested and watched
-	r.GET("/server/:guild_id/movies", func(c *gin.Context) {
+	router.GET("/server/:guild_id/movies", func(c *gin.Context) {
 
 	})
 	// Returns a list of scheduled events for a guild
-	r.GET("/server/:guild_id/events", func(c *gin.Context) {
+	router.GET("/server/:guild_id/events", func(c *gin.Context) {
 
 	})
 	// Returns a list of regularly scheduled events for a guild
-	r.GET("/server/:guild_id/events/recurring", func(c *gin.Context) {
+	router.GET("/server/:guild_id/events/recurring", func(c *gin.Context) {
 
 	})
 	// Adds a new scheduled event for a server
-	r.POST("/server/:guild_id/events/new", func(c *gin.Context) {
+	router.POST("/server/:guild_id/events/new", func(c *gin.Context) {
 
 	})
 	// Returns the event details of a specified event
-	r.GET("/server/:guild_id/events/:event_id", func(c *gin.Context) {
+	router.GET("/server/:guild_id/events/:event_id", func(c *gin.Context) {
 
 	})
-	return r
+	return router
 }
 
 func setupDB(dbinfo string) *gorm.DB {
@@ -157,7 +176,6 @@ func main() {
 	db.AutoMigrate(&Guild{}, &User{}, &GuildMember{}, &Movie{}, &GuildMovie{}, &EventLoc{}, &Event{})
 	env := &Env{db: db}
 
-	r := setupRouter(env)
-	r.Run(":8080")
-
+	router := setupRouter(env)
+	router.Run(":8080")
 }

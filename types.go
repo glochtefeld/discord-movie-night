@@ -16,6 +16,7 @@ type User struct {
 	gorm.Model
 	Discord_ID string
 	Nickname   string
+	State      string
 }
 
 type GuildMember struct {
